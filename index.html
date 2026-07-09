@@ -13,15 +13,16 @@
         select, input[type="text"], input[type="number"], textarea { width: 100%; padding: 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 15px; background-color: #ffffff; box-sizing: border-box; outline: none; }
         textarea { resize: vertical; min-height: 80px; font-family: inherit; }
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-        button { width: 100%; padding: 14px; background-color: #0071e3; color: #ffffff; font-size: 16px; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; }
+        button { width: 100%; padding: 14px; background-color: #0071e3; color: #ffffff; font-size: 16px; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
         .btn-dimmed { background-color: #e8e8ed; color: #0071e3; }
+        .btn-danger { background-color: #ff3b30; color: #ffffff; }
         .list-container { margin-top: 12px; max-height: 160px; overflow-y: auto; border-top: 1px solid #e8e8ed; padding-top: 8px; }
         .name-item { font-size: 14px; padding: 6px 0; color: #333333; }
         .ticket-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e8e8ed; }
         .ticket-row input { width: 80px; padding: 6px; text-align: center; }
         .hidden { display: none !important; }
         #resultBox { background: #e3f2fd; border: 2px solid #2196f3; border-radius: 12px; padding: 20px; text-align: center; margin-top: 20px; }
-        .winner-name { font-size: 24px; font-weight: 700; color: #0d47a1; margin-top: 5px; }
+        .winner-name { font-size: 24px; font-weight: 700; color: #0d47a1; margin-top: 5px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -38,7 +39,7 @@
         <div class="step-title">Adım 2: Katılımcı İsimleri</div>
         <div class="input-group">
             <textarea id="nameInput" placeholder="İsimleri alt alta veya virgülle ayırarak yapıştır..."></textarea>
-            <button id="btnAddName" style="margin-top: 5px;">Listeye Ekle</button>
+            <button id="btnAddName">Listeye Ekle</button>
         </div>
         <div id="namesList" class="list-container"></div>
         <button id="btnLockNames" class="btn-dimmed">İsimleri Sabitle ve İlerle 👉</button>
@@ -51,11 +52,13 @@
     <div id="resultBox" class="hidden">
         <div class="winner-title">🏆 Şanslı Kazanan</div>
         <div id="winnerName" class="winner-name">---</div>
-        <button id="btnReset" class="btn-dimmed" style="margin-top: 15px;">🔄 Aynı Listeyle Yeniden Çek</button>
+        <button id="btnResetKeep" class="btn-dimmed">🔄 Aynı Listeyle Yeniden Çek</button>
+        <button id="btnResetRemove" class="btn-danger">❌ Kazananı Çıkar ve Yeniden Çek</button>
     </div>
 </div>
 <script>
     let participants = [];
+    let lastWinnerIndex = -1;
     
     var Module = {
         locateFile: function(path, prefix) {
@@ -67,7 +70,8 @@
     document.getElementById("btnAddName").addEventListener("click", addNamesToList);
     document.getElementById("btnLockNames").addEventListener("click", lockNamesAndProceed);
     document.getElementById("btnStartDraw").addEventListener("click", runCplusplusEngine);
-    document.getElementById("btnReset").addEventListener("click", resetSystem);
+    document.getElementById("btnResetKeep").addEventListener("click", function() { resetSystem(false); });
+    document.getElementById("btnResetRemove").addEventListener("click", function() { resetSystem(true); });
 
     function addNamesToList() {
         const input = document.getElementById("nameInput");
@@ -122,6 +126,7 @@
         
         let winnerIndex = Module.ccall('WebCekilisBaslat', 'number', [], []);
         if (winnerIndex !== -1) {
+            lastWinnerIndex = winnerIndex; // Kazananın listedeki sırasını kaydet
             let winnerName = Module.ccall('WebKazananAdiniGetir', 'string', ['number'], [winnerIndex]);
             document.getElementById("winnerName").innerText = winnerName;
             document.getElementById("stageNames").classList.add("hidden");
@@ -130,13 +135,17 @@
         } else { alert("Çekiliş yapılırken hata oluştu!"); }
     }
 
-    // ARTIK İSİMLERİ SİLMİYOR, SADECE ARAYÜZÜ ESKİ ADIMA DÖNDÜRÜYOR
-    function resetSystem() {
+    function resetSystem(shouldRemoveWinner) {
+        if (shouldRemoveWinner && lastWinnerIndex !== -1) {
+            // Kazanan kişiyi JavaScript dizisinden uçuruyoruz
+            participants.splice(lastWinnerIndex, 1);
+        }
+        
+        lastWinnerIndex = -1;
         document.getElementById("resultBox").classList.add("hidden"); 
         document.getElementById("stageTickets").classList.add("hidden");
         document.getElementById("stageNames").classList.remove("hidden"); 
         
-        // C++ tarafını temizle ama JS dizisini (participants) ve arayüz listesini koru kanka
         if (typeof Module !== 'undefined' && Module.ccall) {
             Module.ccall('WebHavuzuTemizle', null, [], []);
         }
