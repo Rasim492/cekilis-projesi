@@ -30,7 +30,6 @@
         <div class="step-title">Adım 1: Çekiliş Modu</div>
         <select id="modeSelector" onchange="handleModeChange()">
             <option value="0">Eşit Şans Modu (Herkes 1 Bilet)</option>
-            <option value="1">Dinamik Bilet Modu (Giriş Sırasına Göre)</option>
             <option value="2" selected>Manuel Bilet Modu (Biletleri Elle Gir)</option>
         </select>
     </div>
@@ -56,6 +55,15 @@
 </div>
 <script>
     let participants = [];
+    
+    // GitHub Pages ortamında Wasm dosyasını doğru bulması için Emscripten ayarı
+    var Module = {
+        locateFile: function(path, prefix) {
+            if (path.endsWith('.wasm')) return prefix + path;
+            return path;
+        }
+    };
+
     document.getElementById("btnAddName").addEventListener("click", addNameToList);
     document.getElementById("nameInput").addEventListener("keypress", function(e) { if (e.key === "Enter") addNameToList(); });
     document.getElementById("btnLockNames").addEventListener("click", lockNamesAndProceed);
@@ -91,7 +99,7 @@
     }
     function runCplusplusEngine() {
         const mode = parseInt(document.getElementById("modeSelector").value);
-        if (typeof Module === 'undefined' || !Module.ccall) { alert("Motor henüz yüklenmedi kanka!"); return; }
+        if (typeof Module === 'undefined' || !Module.ccall) { alert("Motor henüz hazır değil, 2 saniye bekleyip tekrar dene kanka!"); return; }
         
         Module.ccall('WebHavuzuTemizle', null, [], []);
         Module.ccall('WebModSec', null, ['number'], [mode]);
