@@ -51,7 +51,7 @@
     <div id="resultBox" class="hidden">
         <div class="winner-title">🏆 Şanslı Kazanan</div>
         <div id="winnerName" class="winner-name">---</div>
-        <button id="btnReset" class="btn-dimmed" style="margin-top: 15px;">🔄 Yeni Çekiliş Başlat</button>
+        <button id="btnReset" class="btn-dimmed" style="margin-top: 15px;">🔄 Aynı Listeyle Yeniden Çek</button>
     </div>
 </div>
 <script>
@@ -74,9 +74,7 @@
         const rawText = input.value;
         if (rawText.trim() === "") return;
 
-        // Hem satır atlamaya (enter) hem de virgüle göre isimleri ayırır
         let lines = rawText.split(/[\n,]+/);
-        
         lines.forEach(line => {
             let cleanName = line.trim();
             if (cleanName !== "") {
@@ -132,10 +130,17 @@
         } else { alert("Çekiliş yapılırken hata oluştu!"); }
     }
 
+    // ARTIK İSİMLERİ SİLMİYOR, SADECE ARAYÜZÜ ESKİ ADIMA DÖNDÜRÜYOR
     function resetSystem() {
-        participants = []; document.getElementById("namesList").innerHTML = "";
-        document.getElementById("resultBox").classList.add("hidden"); document.getElementById("stageTickets").classList.add("hidden");
-        document.getElementById("stageNames").classList.remove("hidden"); document.getElementById("modeSelector").value = "2";
+        document.getElementById("resultBox").classList.add("hidden"); 
+        document.getElementById("stageTickets").classList.add("hidden");
+        document.getElementById("stageNames").classList.remove("hidden"); 
+        
+        // C++ tarafını temizle ama JS dizisini (participants) ve arayüz listesini koru kanka
+        if (typeof Module !== 'undefined' && Module.ccall) {
+            Module.ccall('WebHavuzuTemizle', null, [], []);
+        }
+        renderNames();
         handleModeChange();
     }
 </script>
