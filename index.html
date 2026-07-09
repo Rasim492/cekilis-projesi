@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ v2.0 Çekiliş Sihirbazı</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; color: #1d1d1f; margin: 0; padding: 40px 20px; display: flex; justify-content: center; }
+        .card { background: #ffffff; padding: 30px; border-radius: 18px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04); width: 100%; max-width: 480px; }
+        h2 { text-align: center; font-weight: 600; margin-bottom: 30px; color: #000000; }
+        .step-box { background: #fbfbfd; border: 1px solid #d2d2d7; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .step-title { font-size: 14px; font-weight: 600; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        select, input[type="text"], input[type="number"] { width: 100%; padding: 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 15px; background-color: #ffffff; box-sizing: border-box; outline: none; }
+        .input-group { display: flex; gap: 8px; margin-top: 8px; }
+        button { width: 100%; padding: 14px; background-color: #0071e3; color: #ffffff; font-size: 16px; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; }
+        .btn-dimmed { background-color: #e8e8ed; color: #0071e3; }
+        .list-container { margin-top: 12px; max-height: 160px; overflow-y: auto; border-top: 1px solid #e8e8ed; padding-top: 8px; }
+        .name-item { font-size: 14px; padding: 6px 0; color: #333333; }
+        .ticket-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e8e8ed; }
+        .ticket-row input { width: 80px; padding: 6px; text-align: center; }
+        .hidden { display: none !important; }
+        #resultBox { background: #e3f2fd; border: 2px solid #2196f3; border-radius: 12px; padding: 20px; text-align: center; margin-top: 20px; }
+        .winner-name { font-size: 24px; font-weight: 700; color: #0d47a1; margin-top: 5px; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2>🎰 C++ Çekiliş Motoru</h2>
+    <div class="step-box">
+        <div class="step-title">Adım 1: Çekiliş Modu</div>
+        <select id="modeSelector" onchange="handleModeChange()">
+            <option value="0">Eşit Şans Modu (Herkes 1 Bilet)</option>
+            <option value="1">Dinamik Bilet Modu (Giriş Sırasına Göre)</option>
+            <option value="2" selected>Manuel Bilet Modu (Biletleri Elle Gir)</option>
+        </select>
+    </div>
+    <div id="stageNames" class="step-box">
+        <div class="step-title">Adım 2: Katılımcı İsimleri</div>
+        <div class="input-group">
+            <input type="text" id="nameInput" placeholder="Ad Soyad yaz...">
+            <button id="btnAddName" style="width: auto; margin-top: 0; padding: 0 20px;">Ekle</button>
+        </div>
+        <div id="namesList" class="list-container"></div>
+        <button id="btnLockNames" class="btn-dimmed">İsimleri Sabitle ve İlerle 👉</button>
+    </div>
+    <div id="stageTickets" class="step-box hidden">
+        <div class="step-title">Adım 3: Bilet Sayıları</div>
+        <div id="ticketInputContainer"></div>
+        <button id="btnStartDraw">🎉 Çekilişi Başlat!</button>
+    </div>
+    <div id="resultBox" class="hidden">
+        <div class="winner-title">🏆 Şanslı Kazanan</div>
+        <div id="winnerName" class="winner-name">---</div>
+        <button id="btnReset" class="btn-dimmed" style="margin-top: 15px;">🔄 Yeni Çekiliş Başlat</button>
+    </div>
+</div>
+<script>
+    let participants = [];
+    document.getElementById("btnAddName").addEventListener("click", addNameToList);
+    document.getElementById("nameInput").addEventListener("keypress", function(e) { if (e.key === "Enter") addNameToList(); });
+    document.getElementById("btnLockNames").addEventListener("click", lockNamesAndProceed);
+    document.getElementById("btnStartDraw").addEventListener("click", runCplusplusEngine);
+    document.getElementById("btnReset").addEventListener("click", resetSystem);
+
+    function addNameToList() {
+        const input = document.getElementById("nameInput");
+        const name = input.value.trim();
+        if (name === "") return;
+        participants.push(name);
+        input.value = "";
+        renderNames();
+    }
+    function renderNames() {
+        const listDiv = document.getElementById("namesList");
+        listDiv.innerHTML = participants.map((name, i) => `<div class="name-item">${i+1}. ${name}</div>`).join("");
+    }
+    function handleModeChange() {
+        const mode = document.getElementById("modeSelector").value;
+        document.getElementById("btnLockNames").innerText = (mode === "2") ? "İsimleri Sabitle ve İlerle 👉" : "Doğrudan Çekilişe Geç 🚀";
+    }
+    function lockNamesAndProceed() {
+        if (participants.length === 0) { alert("Kanka önce isim ekle!"); return; }
+        const mode = document.getElementById("modeSelector").value;
+        if (mode === "2") {
+            document.getElementById("stageNames").classList.add("hidden");
+            document.getElementById("stageTickets").classList.remove("hidden");
+            document.getElementById("ticketInputContainer").innerHTML = participants.map((name, i) => `
+                <div class="ticket-row"><span>${name}</span><input type="number" id="ticket_${i}" value="1" min="1"></div>
+            `).join("");
+        } else { runCplusplusEngine(); }
+    }
+    function runCplusplusEngine() {
+        const mode = parseInt(document.getElementById("modeSelector").value);
+        if (typeof Module === 'undefined' || !Module.ccall) { alert("Motor henüz yüklenmedi kanka!"); return; }
+        
+        Module.ccall('WebHavuzuTemizle', null, [], []);
+        Module.ccall('WebModSec', null, ['number'], [mode]);
+
+        for (let i = 0; i < participants.length; i++) {
+            let biletCount = (mode === 2) ? parseInt(document.getElementById(`ticket_${i}`).value) || 1 : 1;
+            Module.ccall('WebKatilimciEkle', null, ['string', 'number'], [participants[i], biletCount]);
+        }
+        
+        let winnerIndex = Module.ccall('WebCekilisBaslat', 'number', [], []);
+        if (winnerIndex !== -1) {
+            let winnerName = Module.ccall('WebKazananAdiniGetir', 'string', ['number'], [winnerIndex]);
+            document.getElementById("winnerName").innerText = winnerName;
+            document.getElementById("stageNames").classList.add("hidden");
+            document.getElementById("stageTickets").classList.add("hidden");
+            document.getElementById("resultBox").classList.remove("hidden");
+        } else { alert("Çekiliş yapılırken hata oluştu!"); }
+    }
+    function resetSystem() {
+        participants = []; document.getElementById("namesList").innerHTML = "";
+        document.getElementById("resultBox").classList.add("hidden"); document.getElementById("stageTickets").classList.add("hidden");
+        document.getElementById("stageNames").classList.remove("hidden"); document.getElementById("modeSelector").value = "2";
+        handleModeChange();
+    }
+</script>
+<script async src="cekilis_motoru.js"></script>
+</body>
+</html>
